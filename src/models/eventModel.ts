@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../db'; // Instance Sequelize dari db.ts
 
-interface EventAttributes {
+export interface EventAttributes {
   event_id: number;
   event_name: string;
   event_description: string | null;
@@ -13,11 +13,12 @@ interface EventAttributes {
   venue_address: string | null;
   default_sol_price: number;
   is_active: boolean;
+  event_type: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
 
-export interface EventCreationAttributes extends Optional<EventAttributes, 'event_id' | 'created_at' | 'updated_at' | 'event_description' | 'event_image_url' | 'event_overall_start_date' | 'event_overall_end_date' | 'event_overall_start_time' | 'event_overall_end_time' | 'venue_address' | 'is_active' | 'default_sol_price'> {}
+export interface EventCreationAttributes extends Optional<EventAttributes, 'event_id' | 'created_at' | 'updated_at' | 'event_description' | 'event_image_url' | 'event_overall_start_date' | 'event_overall_end_date' | 'event_overall_start_time' | 'event_overall_end_time' | 'venue_address' | 'is_active' | 'default_sol_price' | 'event_type'> {}
 
 class Event extends Model<EventAttributes, EventCreationAttributes> implements EventAttributes {
   public event_id!: number;
@@ -31,7 +32,7 @@ class Event extends Model<EventAttributes, EventCreationAttributes> implements E
   public venue_address!: string | null;
   public default_sol_price!: number;
   public is_active!: boolean;
-
+  public event_type!: string | null;
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
 }
@@ -94,6 +95,10 @@ Event.init(
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW
+    },
+    event_type: {
+      type: DataTypes.STRING,
+      allowNull: true,
     }
   },
   {

@@ -1,8 +1,11 @@
 import { Router, RequestHandler } from 'express';
-import { mintTicket } from '../controllers/ticketController';
+import { prepareTicketForPurchase, finalizeTicketPurchase, getUserTickets } from '../controllers/ticketController';
 
 const router = Router();
 
-router.post('/mint', mintTicket as RequestHandler);
+router.post('/prepare', prepareTicketForPurchase as RequestHandler);
+router.post('/finalize', finalizeTicketPurchase as RequestHandler);
+router.get('/users/:userWalletAddress', getUserTickets as RequestHandler);
+
 
 export default router;

@@ -2,7 +2,7 @@ import { DataTypes, Model, Optional, ForeignKey } from 'sequelize';
 import sequelize from '../db';
 import Event from './eventModel';
 
-interface ShowAttributes {
+export interface ShowAttributes {
   show_id: number;
   event_id: ForeignKey<Event['event_id']>;
   show_name: string | null;
@@ -18,7 +18,7 @@ interface ShowAttributes {
   updated_at?: Date;
 }
 
-interface ShowCreationAttributes extends Optional<ShowAttributes, 'show_id' | 'created_at' | 'updated_at' | 'show_name' | 'show_end_time' | 'sol_price' | 'metadata_template_ipfs_cid' | 'total_tickets' | 'tickets_sold' | 'is_active'> { }
+export interface ShowCreationAttributes extends Optional<ShowAttributes, 'show_id' | 'created_at' | 'updated_at' | 'show_name' | 'show_end_time' | 'sol_price' | 'metadata_template_ipfs_cid' | 'total_tickets' | 'tickets_sold' | 'is_active'> { }
 
 class Show extends Model<ShowAttributes, ShowCreationAttributes> implements ShowAttributes {
   public show_id!: number;

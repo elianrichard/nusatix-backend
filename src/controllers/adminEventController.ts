@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Event, Show } from '../models';
-import { EventCreationAttributes } from '../models/eventModel';
+import { EventCreationAttributes, EventAttributes } from '../models/eventModel';
+import { convertSolToIdr } from '../services/currencyConverterService';
 
 export const createEvent = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -21,7 +22,15 @@ export const getAllEvents = async (req: Request, res: Response, next: NextFuncti
       where: onlyActive ? { is_active: true } : undefined,
     };
     const events = await Event.findAll(options);
-    res.status(200).json(events);
+    const eventsWithIdrPrice = await Promise.all(
+      events.map(async (event) => {
+        const eventPlain = event.toJSON() as EventAttributes & { event_idr_price?: number | null }; // Ambil plain object
+        const idrPrice = await convertSolToIdr(eventPlain.default_sol_price);
+        eventPlain.event_idr_price = idrPrice;
+        return eventPlain;
+      })
+    );
+    res.status(200).json(eventsWithIdrPrice);
   } catch (error) {
     next(error);
   }
@@ -39,7 +48,22 @@ export const getEventById = async (req: Request, res: Response, next: NextFuncti
     });
 
     if (event) {
-      res.status(200).json(event);
+      const eventPlain = event.toJSON() as EventAttributes & { 
+        event_idr_price?: number | null; 
+        shows?: any[];
+        shows_with_idr_price?: any[];
+      };
+      eventPlain.event_idr_price = await convertSolToIdr(eventPlain.default_sol_price);
+
+      if (eventPlain.shows && Array.isArray(eventPlain.shows)) {
+        eventPlain.shows_with_idr_price = await Promise.all(
+          (eventPlain.shows as any[]).map(async (showItem: any) => {
+            const showIdrPrice = await convertSolToIdr(showItem.sol_price);
+            return { ...showItem, show_idr_price: showIdrPrice };
+          })
+        );
+      }
+      res.status(200).json(eventPlain);
     } else {
       res.status(404).json({ message: 'Event not found' });
     }

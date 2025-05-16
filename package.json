@@ -9,7 +9,10 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@metaplex-foundation/js": "^0.20.1",
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
     "@pinata/sdk": "^2.1.0",
+    "@solana/web3.js": "^1.98.2",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

@@ -8,6 +8,8 @@ interface TicketAttributes {
   owner_wallet_address: string;
   nft_mint_address: string;
   nft_metadata_url: string;
+  nft_name: string | null;
+  nft_image_url: string | null;
   purchase_price_sol: number | null;
   purchase_price_idr: number | null;
   seat_info: string | null;
@@ -15,7 +17,7 @@ interface TicketAttributes {
   purchased_at?: Date;
 }
 
-interface TicketCreationAttributes extends Optional<TicketAttributes, 'ticket_id' | 'purchased_at' | 'purchase_price_sol' | 'purchase_price_idr' | 'seat_info' | 'is_checked_in'> { }
+interface TicketCreationAttributes extends Optional<TicketAttributes, 'ticket_id' | 'purchased_at' | 'purchase_price_sol' | 'purchase_price_idr' | 'seat_info' | 'is_checked_in' | 'nft_name' | 'nft_image_url'> { }
 
 class Ticket extends Model<TicketAttributes, TicketCreationAttributes> implements TicketAttributes {
   public ticket_id!: number;
@@ -23,6 +25,8 @@ class Ticket extends Model<TicketAttributes, TicketCreationAttributes> implement
   public owner_wallet_address!: string;
   public nft_mint_address!: string;
   public nft_metadata_url!: string;
+  public nft_name!: string | null;
+  public nft_image_url!: string | null;
   public purchase_price_sol!: number | null;
   public purchase_price_idr!: number | null;
   public seat_info!: string | null;
@@ -58,6 +62,14 @@ Ticket.init(
     nft_metadata_url: {
       type: new DataTypes.STRING(255),
       allowNull: false,
+    },
+    nft_name: {
+      type: new DataTypes.STRING(255),
+      allowNull: true,
+    },
+    nft_image_url: {
+      type: new DataTypes.STRING(255),
+      allowNull: true,
     },
     purchase_price_sol: {
       type: new DataTypes.DECIMAL(20, 8),

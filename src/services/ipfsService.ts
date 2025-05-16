@@ -57,7 +57,8 @@ export const uploadJsonToIpfs = async (
  * @throws Error jika fetch gagal.
  */
 export const fetchJsonFromIpfs = async (cid: string): Promise<object> => {
-  const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${cid}`;
+  const convertCid = cid.replace('ipfs://', '');
+  const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${convertCid}`;
 
   try {
     const response = await axios.get(gatewayUrl);

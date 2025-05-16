@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { Show } from '../models';
+import { Show, Ticket } from '../models';
 import { uploadJsonToIpfs } from '../services/ipfsService';
+import { convertSolToIdr } from '../services/currencyConverterService';
 
 interface ShowMetadataTemplateInput {
   name: string;
@@ -80,6 +81,8 @@ export const updateShowDetails = async (req: Request, res: Response, next: NextF
 export const getShowById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const showId = parseInt(req.params.showId, 10);
+    const userWalletAddress = req.query.user_wallet_address as string | undefined;
+
     if (isNaN(showId)) {
       return res.status(400).json({ message: 'Invalid Show ID' });
     }
@@ -87,7 +90,24 @@ export const getShowById = async (req: Request, res: Response, next: NextFunctio
     if (!show) {
       return res.status(404).json({ message: 'Show not found' });
     }
-    res.status(200).json(show);
+
+    const showPlain = show.toJSON() as any; 
+    showPlain.show_idr_price = await convertSolToIdr(showPlain.sol_price);
+
+    if (userWalletAddress) {
+      const ownedTicket = await Ticket.findOne({ 
+        where: { show_id: showPlain.show_id, owner_wallet_address: userWalletAddress } 
+      });
+      showPlain.is_owned = !!ownedTicket;
+    } else {
+      showPlain.is_owned = false;
+    }
+
+    if (showPlain.event) {
+      showPlain.event.event_idr_price = await convertSolToIdr(showPlain.event.default_sol_price);
+    }
+  
+    res.status(200).json(showPlain);
   } catch (error) {
     next(error);
   }
@@ -96,6 +116,8 @@ export const getShowById = async (req: Request, res: Response, next: NextFunctio
 export const getAllShows = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { eventId, active } = req.query;
+    const userWalletAddress = req.query.user_wallet_address as string | undefined;
+
     const whereClause: any = {};
     if (eventId) {
       whereClause.event_id = parseInt(eventId as string, 10);
@@ -111,7 +133,34 @@ export const getAllShows = async (req: Request, res: Response, next: NextFunctio
       include: ['event'],
       order: [['show_date', 'ASC'], ['show_start_time', 'ASC']]
     });
-    res.status(200).json(shows);
+
+    let ownedShowIds = new Set<number>();
+    if (userWalletAddress && shows.length > 0) {
+      const showIds = shows.map(s => s.show_id);
+      const ownedTickets = await Ticket.findAll({
+        where: {
+          owner_wallet_address: userWalletAddress,
+          show_id: showIds
+        },
+        attributes: ['show_id']
+      });
+      ownedTickets.forEach(ticket => ownedShowIds.add(ticket.show_id));
+    }
+
+    const showsWithDetails = await Promise.all(
+      shows.map(async (show) => {
+        const showPlain = show.toJSON() as any; 
+        showPlain.show_idr_price = await convertSolToIdr(showPlain.sol_price);
+        showPlain.is_owned = userWalletAddress ? ownedShowIds.has(showPlain.show_id) : false;
+
+        if (showPlain.event) {
+            showPlain.event.event_idr_price = await convertSolToIdr(showPlain.event.default_sol_price);
+        }
+        return showPlain;
+      })
+    );
+    
+    res.status(200).json(showsWithDetails);
   } catch (error) {
     next(error);
   }
